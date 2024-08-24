@@ -9,17 +9,38 @@ using System.Threading.Tasks;
 namespace Server
 {
 
-
     class PlayerInfoReq
     {
+        public byte testByte;
         public long playerId;
         public string name;
-
-        public struct Skill
+        public class Skill
         {
             public int id;
             public short level;
             public float duration;
+            public class Attribute
+            {
+                public int att;
+
+                public void Read(ReadOnlySpan<byte> s, ref ushort count)
+                {
+                    this.att = BitConverter.ToInt32(s.Slice(count, s.Length - count));
+                    count += sizeof(int);
+                }
+
+                public bool Write(Span<byte> s, ref ushort count)
+                {
+                    bool success = true;
+                    success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), this.att);
+                    count += sizeof(int);
+                    return success;
+                }
+
+            }
+
+            public List<Attribute> attributes = new List<Attribute>();
+
 
             public void Read(ReadOnlySpan<byte> s, ref ushort count)
             {
@@ -29,6 +50,15 @@ namespace Server
                 count += sizeof(short);
                 this.duration = BitConverter.ToSingle(s.Slice(count, s.Length - count));
                 count += sizeof(float);
+                this.attributes.Clear();
+                ushort attributeLen = BitConverter.ToUInt16(s.Slice(count, s.Length - count));
+                count += sizeof(ushort);
+                for (int i = 0; i < attributeLen; i++)
+                {
+                    Attribute attribute = new Attribute();
+                    attribute.Read(s, ref count);
+                    attributes.Add(attribute);
+                }
             }
 
             public bool Write(Span<byte> s, ref ushort count)
@@ -40,6 +70,10 @@ namespace Server
                 count += sizeof(short);
                 success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), this.duration);
                 count += sizeof(float);
+                success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), (ushort)this.attributes.Count);
+                count += sizeof(ushort);
+                foreach (Attribute attribute in this.attributes)
+                    success &= attribute.Write(s, ref count);
                 return success;
             }
 
@@ -55,6 +89,8 @@ namespace Server
             ReadOnlySpan<byte> s = new ReadOnlySpan<byte>(segment.Array, segment.Offset, segment.Count);
             count += sizeof(ushort); // size
             count += sizeof(ushort); // packetID
+            this.testByte = (byte)segment.Array[segment.Offset + count];
+            count += sizeof(byte);
             this.playerId = BitConverter.ToInt64(s.Slice(count, s.Length - count));
             count += sizeof(long);
             ushort nameLen = BitConverter.ToUInt16(s.Slice(count, s.Length - count));
@@ -84,9 +120,11 @@ namespace Server
             count += sizeof(ushort); // packet의 size 넣을 자이를 남겨두기
             success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), (ushort)PacketID.PlayerInfoReq);
             count += sizeof(ushort);
+            segment.Array[segment.Offset + count] = (byte)this.testByte;
+            count += sizeof(byte);
             success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), this.playerId);
             count += sizeof(long);
-            ushort nameLen = (ushort)Encoding.Unicode.GetBytes(this.name, 0, this.name.Length, segment.Array, segment.Offset + count + sizeof(ushort)); // + sizeof(ushort)를 한 이유는 Len이 들어갈 공간을 비워두기 위해서.
+            ushort nameLen = (ushort)Encoding.Unicode.GetBytes(this.name, 0, this.name.Length, segment.Array, segment.Offset + count + sizeof(ushort)); // + sizeof(ushort)를 한 이유는 길이가 들어갈 공간을 비워두기 위해서.
             success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), nameLen);
             count += sizeof(ushort);
             count += nameLen;
@@ -99,8 +137,6 @@ namespace Server
             return SendBufferHelper.Close(count);
         }
     }
-
-
 
     public enum PacketID
     {
