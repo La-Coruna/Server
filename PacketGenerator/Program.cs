@@ -11,13 +11,18 @@ namespace PacketGenerator
 
         static void Main(string[] args)
         {
+            string pdlPath = "../PDL.xml";
+
             XmlReaderSettings settings = new XmlReaderSettings()
             {
                 IgnoreComments = true, // 주석 무시
                 IgnoreWhitespace = true // 스페이스바 무시
             };
 
-            using (XmlReader r = XmlReader.Create("PDL.xml", settings))
+            if(args.Length >= 1)
+                pdlPath = args[0];
+
+            using (XmlReader r = XmlReader.Create(pdlPath, settings))
             {
                 r.MoveToContent(); // xml의 header를 건너 뜀.
                 
@@ -29,7 +34,7 @@ namespace PacketGenerator
                 }
 
                 string fileText = string.Format(PacketFormat.fileFormat, packetEnums, genPacket);
-                File.WriteAllText("GenPacket.cs", fileText);
+                File.WriteAllText("GenPackets.cs", fileText);
             }
         }
 
