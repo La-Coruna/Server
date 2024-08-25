@@ -12,6 +12,9 @@ namespace Server
 
         static void Main(string[] args)
         {
+            //멀티쓰레드가 개입하지 않는 부분
+            PacketManager.Instance.Register();
+
             // DNS
             string host = Dns.GetHostName();
             IPHostEntry ipHost = Dns.GetHostEntry(host);

@@ -14,10 +14,10 @@ namespace DummyClient
 
             // 서버와 연결되었다면, 나의 플레이어 정보를 줘. 내 playerId는 1001이야.
             PlayerInfoReq packet = new PlayerInfoReq() { playerId = 1001, name = "ABCD" };
-            var skill = new PlayerInfoReq.Skill() { id = 101, level = 1, duration =3.0f};
+            var skill = new PlayerInfoReq.Skill() { id = 101, level = 1, duration = 3.0f };
             skill.attributes.Add(new PlayerInfoReq.Skill.Attribute() { att = 77 });
             packet.skills.Add(skill);
-            
+
             packet.skills.Add(new PlayerInfoReq.Skill() { id = 201, level = 2, duration =4.0f });
             packet.skills.Add(new PlayerInfoReq.Skill() { id = 301, level = 3, duration =5.0f });
             packet.skills.Add(new PlayerInfoReq.Skill() { id = 401, level = 4, duration =6.0f });
