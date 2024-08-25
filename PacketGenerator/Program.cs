@@ -9,6 +9,9 @@ namespace PacketGenerator
         static short packetId;
         static string packetEnums;
 
+        static string clientRegister;
+        static string serverRegister;
+
         static void Main(string[] args)
         {
             string pdlPath = "../PDL.xml";
@@ -35,9 +38,15 @@ namespace PacketGenerator
 
                 string fileText = string.Format(PacketFormat.fileFormat, packetEnums, genPacket);
                 File.WriteAllText("GenPackets.cs", fileText);
+
+                string cleintManagerText = string.Format(PacketFormat.managerFormat, clientRegister);
+                File.WriteAllText("ClientPacketManager.cs", cleintManagerText);
+                string serverManagerText = string.Format(PacketFormat.managerFormat, serverRegister);
+                File.WriteAllText("ServerPacketManager.cs", serverManagerText);
             }
         }
 
+        // 하나의 Packet단위로 파싱해주는 함수
         public static void ParsePacket(XmlReader r)
         {
             if (r.NodeType == XmlNodeType.EndElement)
@@ -59,9 +68,15 @@ namespace PacketGenerator
             Tuple<string, string, string> t = ParseMembers(r);
             genPacket += string.Format(PacketFormat.packetFormat, packetName, t.Item1, t.Item2, t.Item3);
             packetEnums += string.Format(PacketFormat.packetEnumFormat, packetName, ++packetId) + Environment.NewLine + "\t";
+            
+            // S_가 붙은 패킷은 Server->Client 패킷임. 즉, 이 패킷에 대한 정보는 수신받는 Cleint가 알고 있어야 함.
+            if (packetName.StartsWith("S_") || packetName.StartsWith("s_"))
+                clientRegister += string.Format(PacketFormat.managerRegisterFormat, packetName) + Environment.NewLine;
+            else
+                serverRegister += string.Format(PacketFormat.managerRegisterFormat, packetName) + Environment.NewLine;
         }
 
-        /*
+        /* 파싱된 Packet에서 Member단위로 파싱해주는 함수
          * {1} 멤버 변수들
          * {2} 멤버 변수 Read
          * {3} 멤버 변수 Write
