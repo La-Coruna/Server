@@ -19,8 +19,8 @@ class PacketManager
     Dictionary<ushort, Action<PacketSession, IPacket>> _handler = new Dictionary<ushort, Action<PacketSession, IPacket>>();
     public void Register()
     {
-        _onRecv.Add((ushort)PacketID.C_PlayerInfoReq, MakePacket<C_PlayerInfoReq>);
-        _handler.Add((ushort)PacketID.C_PlayerInfoReq, PacketHandler.C_PlayerInfoReqHandler);
+        _onRecv.Add((ushort)PacketID.C_Chat, MakePacket<C_Chat>);
+        _handler.Add((ushort)PacketID.C_Chat, PacketHandler.C_ChatHandler);
 
 
     }
