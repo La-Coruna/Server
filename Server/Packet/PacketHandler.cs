@@ -12,7 +12,7 @@ internal class PacketHandler
         if (clientSession.Room == null)
             return;
 
-        clientSession.Room.Broadcaset(clientSession, chatPacket.chat);
+        clientSession.Room.Broadcast(clientSession, chatPacket.chat);
 
 
 

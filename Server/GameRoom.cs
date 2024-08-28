@@ -15,7 +15,7 @@ namespace Server
         {
             S_Chat packet = new S_Chat();
             packet.playerId = session.SessionId;
-            packet.chat = chat;
+            packet.chat = $"{chat} Iam {packet.playerId}";
             ArraySegment<byte> segment = packet.Write();
 
             // 공유하는 변수인 _sessions를 다룰 때는 무조건 lock을 걸어주고 해야함.
