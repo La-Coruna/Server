@@ -12,14 +12,9 @@ internal class PacketHandler
         if (clientSession.Room == null)
             return;
 
-        clientSession.Room.Broadcast(clientSession, chatPacket.chat);
-
-
-
-
-    }
-
-    public static void S_TestHandler(PacketSession session, IPacket packet)
-    {
+        GameRoom room = clientSession.Room;
+        room.Push(
+            () => clientSession.Room.Broadcast(clientSession,chatPacket.chat)
+        );
     }
 }

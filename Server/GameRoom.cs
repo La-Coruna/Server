@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ServerCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,10 +7,15 @@ using System.Threading.Tasks;
 
 namespace Server
 {
-    internal class GameRoom
+    internal class GameRoom : IJobQueue
     {
         List<ClientSession> _sessions = new List<ClientSession>();
-        object _lock = new object();
+        JobQueue _jobQueue = new JobQueue();
+
+        public void Push(Action job)
+        {
+            _jobQueue.Push(job);
+        }
 
         public void Broadcast(ClientSession session, string chat)
         {
@@ -19,30 +25,21 @@ namespace Server
             ArraySegment<byte> segment = packet.Write();
 
             // 공유하는 변수인 _sessions를 다룰 때는 무조건 lock을 걸어주고 해야함.
-            lock (_lock)
+            foreach (ClientSession otherClientSession in _sessions)
             {
-                foreach (ClientSession otherClientSession in _sessions)
-                {
-                    otherClientSession.Send(segment);
-                }
+                otherClientSession.Send(segment);
             }
         }
 
         public void Enter(ClientSession session)
         {
-            lock (_lock)
-            {
-                _sessions.Add(session);
-                session.Room = this;
-            }
+            _sessions.Add(session);
+            session.Room = this;
         }
 
         public void Leave(ClientSession session)
         {
-            lock (_lock)
-            {
-                _sessions.Remove(session);
-            }
+            _sessions.Remove(session);
         }
     }
 }
