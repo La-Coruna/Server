@@ -13,7 +13,7 @@ namespace ServerCore
         Socket _listenSocket;
         Func<Session> _sessionFactory; // session을 어떤 방식으로 만들 것 인지 정의하는 것.
 
-        public void Init(IPEndPoint endPoint, Func<Session> sessionFactory)
+        public void Init(IPEndPoint endPoint, Func<Session> sessionFactory, int register = 10, int backlog = 100)
         {
             // 문지기
             _listenSocket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -24,11 +24,14 @@ namespace ServerCore
 
             // 영업 시작
             // backlog: 최대 대기수
-            _listenSocket.Listen(10);
-            
-            SocketAsyncEventArgs args = new SocketAsyncEventArgs();
-            args.Completed += new EventHandler<SocketAsyncEventArgs>(OnAcceptCompleted);
-            RegisterAccept(args); // 처음 낚시대를 던짐
+            _listenSocket.Listen(backlog);
+
+            for (int i = 0; i < register; i++)
+            {
+                SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+                args.Completed += new EventHandler<SocketAsyncEventArgs>(OnAcceptCompleted);
+                RegisterAccept(args); // 처음 낚시대를 던짐
+            }
         }
 
         // 클라이언트의 접속을 기다리는 함수
