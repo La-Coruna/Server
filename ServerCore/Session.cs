@@ -16,6 +16,7 @@ namespace ServerCore
         public sealed override int OnRecv(ArraySegment<byte> buffer)
         {   // 패킷을 파싱하는 함수
             int processLen = 0;
+            int packetCount = 0; // 테스트 할 때 로그를 찍기 위해서 설정.
 
             while (true)
             {
@@ -30,10 +31,14 @@ namespace ServerCore
 
                 // 여기까지 왔으면 패킷 조립 가능
                 OnRecvPacket(new ArraySegment<byte>(buffer.Array, buffer.Offset, dataSize));
+                packetCount++;
 
                 processLen += dataSize;
                 buffer = new ArraySegment<byte>(buffer.Array, buffer.Offset + dataSize, buffer.Count - dataSize);
             }
+
+            if(packetCount > 1)
+                Console.WriteLine($"패킷 모아보내기 : {packetCount}");
 
             return processLen;
         }
@@ -46,7 +51,7 @@ namespace ServerCore
         Socket _socket;
         int _disconnected = 0;
 
-        RecvBuffer _recvBuffer = new RecvBuffer(1024);
+        RecvBuffer _recvBuffer = new RecvBuffer(65535);
 
         object _lock = new object();
         Queue<ArraySegment<byte>> _sendQueue = new Queue<ArraySegment<byte>>();
@@ -78,6 +83,22 @@ namespace ServerCore
             _sendArgs.Completed += new EventHandler<SocketAsyncEventArgs>(OnSendCompleted);
 
             RegisterRecv();
+        }
+        public void Send(List<ArraySegment<byte>> sendBuffList)
+        {
+            // 빈 List를 주면, RegisterSend에서 빈 _pendinglIst를 넘겨주게 되고, 결국 OnSendComplete에서 문제가 생길 것임.
+            if(sendBuffList.Count() == 0)
+                return;
+
+            lock (_lock)
+            {
+                foreach (var sendBuff in sendBuffList)
+                    _sendQueue.Enqueue(sendBuff);
+
+                if (_pendingList.Count == 0)
+                    RegisterSend();
+            }
+
         }
 
         public void Send(ArraySegment<byte> sendBuff)

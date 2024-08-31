@@ -11,10 +11,21 @@ namespace Server
     {
         List<ClientSession> _sessions = new List<ClientSession>();
         JobQueue _jobQueue = new JobQueue();
+        List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
 
         public void Push(Action job)
         {
             _jobQueue.Push(job);
+        }
+
+        public void Flush()
+        {
+            // N ^ 2
+            foreach (ClientSession s in _sessions)
+                s.Send(_pendingList);
+
+            Console.WriteLine($"Flushed {_pendingList.Count} items");
+            _pendingList.Clear();
         }
 
         public void Broadcast(ClientSession session, string chat)
@@ -24,11 +35,7 @@ namespace Server
             packet.chat = $"{chat} Iam {packet.playerId}";
             ArraySegment<byte> segment = packet.Write();
 
-            // 공유하는 변수인 _sessions를 다룰 때는 무조건 lock을 걸어주고 해야함.
-            foreach (ClientSession otherClientSession in _sessions)
-            {
-                otherClientSession.Send(segment);
-            }
+            _pendingList.Add(segment);
         }
 
         public void Enter(ClientSession session)

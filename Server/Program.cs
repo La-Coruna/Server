@@ -23,9 +23,11 @@ namespace Server
             _listener.Init(endPoint, () => { return SessionManager.Instance.Generate(); });
             Console.WriteLine("Listening...");
 
+            // 메인 쓰레드
             while (true)
             {
-                ;
+                Room.Push(() => Room.Flush());
+                Thread.Sleep(250);
             }
 
 
